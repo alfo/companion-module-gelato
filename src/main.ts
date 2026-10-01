@@ -1,0 +1,167 @@
+import { InstanceBase, InstanceStatus, type SomeCompanionConfigField } from '@companion-module/base'
+import { GetConfigFields, withDefaults, type ModuleConfig } from './config.js'
+import { defaultOptions, GelatoConnection, type ConnectionOptions, type LinkStatus } from './connection.js'
+import { UpdateVariableDefinitions, type VariablesSchema } from './variables.js'
+import { UpgradeScripts } from './upgrades.js'
+import { UpdateActions, type ActionsSchema } from './actions.js'
+import { UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
+import { UpdatePresets } from './presets.js'
+import { initialValues, parseFeedback, type VariableValues } from './state.js'
+import type { OSCMessage } from './osc.js'
+import { scrolled, viewValues, type ScrollDirection } from './view.js'
+
+export type ModuleSchema = {
+	config: ModuleConfig
+	secrets: undefined
+	actions: ActionsSchema
+	feedbacks: FeedbacksSchema
+	variables: VariablesSchema
+}
+
+export { UpgradeScripts }
+
+export default class ModuleInstance extends InstanceBase<ModuleSchema> {
+	config!: ModuleConfig // Set up in init()
+	/** Every variable's current value: what feedbacks and actions read. */
+	values: VariableValues = initialValues()
+	/** Ping and reconnect timing: tests shorten it. */
+	timing: Partial<ConnectionOptions> = {}
+	private link?: GelatoConnection
+	/** The edited palette a knob has scrolled to (1 to 8). */
+	private editedShown = 1
+	private pending: Partial<VariableValues> = {}
+	private flushTimer?: NodeJS.Timeout
+
+	constructor(internal: unknown) {
+		super(internal)
+	}
+
+	async init(config: ModuleConfig): Promise<void> {
+		this.config = withDefaults(config)
+
+		this.updateActions()
+		this.updateFeedbacks()
+		this.updatePresets()
+		this.updateVariableDefinitions()
+		this.setVariableValues({ ...this.values, ...viewValues(this.values, this.editedShown) })
+
+		this.connect()
+	}
+
+	async destroy(): Promise<void> {
+		clearTimeout(this.flushTimer)
+		this.flushTimer = undefined
+		this.link?.stop()
+		this.link = undefined
+	}
+
+	async configUpdated(config: ModuleConfig): Promise<void> {
+		this.config = withDefaults(config)
+		this.connect()
+	}
+
+	getConfigFields(): SomeCompanionConfigField[] {
+		return GetConfigFields()
+	}
+
+	/** Sends a command, or says why it didn't go. */
+	send(address: string, args: (string | number)[]): void {
+		if (!this.link?.send(address, args)) this.log('warn', `Not connected: ${address} was not sent`)
+	}
+
+	private connect(): void {
+		this.link?.stop()
+		this.link = undefined
+		this.resetValues()
+		const { host, port, protocol, feedbackPort } = this.config
+		if (!host) {
+			this.updateStatus(InstanceStatus.BadConfig, 'Set the Gelato host')
+			return
+		}
+		this.updateStatus(InstanceStatus.Connecting)
+		this.link = new GelatoConnection(
+			{ ...defaultOptions, ...this.timing, host, port, protocol, feedbackPort },
+			{
+				onMessage: (message) => this.received(message),
+				onStatus: (status) => this.linkChanged(status),
+				onLog: (level, text) => this.log(level, text),
+			},
+		)
+		this.link.start()
+	}
+
+	/**
+	 * A ping brings a burst of ~35 messages: gather their values and tell Companion once, not once
+	 * per message.
+	 */
+	private received(message: OSCMessage): void {
+		const patch = parseFeedback(message)
+		if (!patch) return
+		Object.assign(this.values, patch)
+		this.pending = { ...this.pending, ...patch }
+		this.flushTimer ??= setTimeout(() => this.flush(), 20)
+	}
+
+	private flush(): void {
+		this.flushTimer = undefined
+		const patch = this.pending
+		this.pending = {}
+		if (Object.keys(patch).length === 0) return
+		this.setVariableValues({ ...patch, ...viewValues(this.values, this.editedShown) })
+		this.checkAllFeedbacks()
+	}
+
+	/** A knob scrolls through the edited palettes. */
+	scrollEdited(direction: ScrollDirection): void {
+		this.editedShown = scrolled(this.editedShown, Number(this.values.edited_count) || 0, direction)
+		this.setVariableValues(viewValues(this.values, this.editedShown))
+	}
+
+	private linkChanged({ state, message }: LinkStatus): void {
+		switch (state) {
+			case 'ok':
+				this.updateStatus(InstanceStatus.Ok)
+				return
+			case 'connecting':
+				this.updateStatus(InstanceStatus.Connecting)
+				break
+			case 'no-reply':
+				this.updateStatus(InstanceStatus.ConnectionFailure, message)
+				break
+			case 'error':
+				this.updateStatus(InstanceStatus.ConnectionFailure, message)
+				break
+			case 'closed':
+				this.updateStatus(InstanceStatus.Disconnected)
+				break
+		}
+		// Without a link the buttons show nothing, not the last thing Gelato said.
+		this.resetValues()
+	}
+
+	private resetValues(): void {
+		clearTimeout(this.flushTimer)
+		this.flushTimer = undefined
+		this.pending = {}
+		this.values = initialValues()
+		this.editedShown = 1
+		this.setVariableValues({ ...this.values, ...viewValues(this.values, this.editedShown) })
+		this.checkAllFeedbacks()
+	}
+
+	updateActions(): void {
+		UpdateActions(this)
+	}
+
+	updateFeedbacks(): void {
+		UpdateFeedbacks(this)
+	}
+
+	updatePresets(): void {
+		UpdatePresets(this)
+	}
+
+	updateVariableDefinitions(): void {
+		UpdateVariableDefinitions(this)
+	}
+}

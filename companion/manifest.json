@@ -1,0 +1,28 @@
+{
+	"$schema": "../node_modules/@companion-module/base/assets/manifest.schema.json",
+	"type": "connection",
+	"id": "gelato",
+	"name": "gelato",
+	"shortname": "Gelato",
+	"description": "Control Gelato, the Mac app that puts gel colours onto Eos consoles, over its Remote Control OSC server",
+	"version": "0.1.0",
+	"license": "MIT",
+	"repository": "git+https://github.com/alfo/companion-module-gelato.git",
+	"bugs": "https://github.com/alfo/companion-module-gelato/issues",
+	"maintainers": [
+		{
+			"name": "Alex Forey",
+			"email": "me@alexforey.com"
+		}
+	],
+	"runtime": {
+		"type": "node22",
+		"api": "nodejs-ipc",
+		"apiVersion": "2.0.4",
+		"entrypoint": "../dist/main.js"
+	},
+	"legacyIds": [],
+	"manufacturer": "Gelato",
+	"products": ["Gelato"],
+	"keywords": ["lighting", "eos", "etc", "gel", "colour", "osc"]
+}
