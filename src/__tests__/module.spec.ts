@@ -237,4 +237,27 @@ describe('the module against a fake Gelato', () => {
 		await instance.configUpdated({ host: '127.0.0.1', port: gelato.port, protocol: 'tcp', feedbackPort: 8101 })
 		await until(() => fake.lastStatus === InstanceStatus.Ok, 2000, 'Ok')
 	})
+
+	it('a knob scrolls the edited palettes it shows, without sending anything', async () => {
+		gelato.state['/gelato/out/edited/count'] = [2]
+		gelato.state['/gelato/out/edited/1'] = ['201', 'L201', 'update', 'Update', 3, 1]
+		gelato.state['/gelato/out/edited/2'] = ['202', 'L202', 'update', 'Update', 3, 1]
+		await start()
+		await until(() => fake.variables.edited_shown_palette === '201', 2000, 'the first edited palette')
+		const before = gelato.received.length
+		await fake.press('edited_scroll', { direction: 'next' })
+		assert.equal(fake.variables.edited_shown_palette, '202')
+		assert.equal(fake.variables.edited_shown, 2)
+		await fake.press('edited_scroll', { direction: 'next' })
+		assert.equal(fake.variables.edited_shown, 1, 'round again')
+		assert.equal(gelato.received.length, before, 'nothing went to Gelato')
+	})
+
+	it('a knob steps the brand letter with an ordinary entry key', async () => {
+		await start()
+		await until(() => fake.lastStatus === InstanceStatus.Ok)
+		await fake.press('entry_brand', { direction: 'next' })
+		await until(() => gelato.received.some((m) => m.address === '/gelato/entry/key'), 2000, 'the key')
+		assert.deepEqual(gelato.received.find((m) => m.address === '/gelato/entry/key')?.args, ['L'])
+	})
 })

@@ -8,6 +8,7 @@ import { UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
 import { initialValues, parseFeedback, type VariableValues } from './state.js'
 import type { OSCMessage } from './osc.js'
+import { scrolled, viewValues, type ScrollDirection } from './view.js'
 
 export type ModuleSchema = {
 	config: ModuleConfig
@@ -26,6 +27,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	/** Ping and reconnect timing: tests shorten it. */
 	timing: Partial<ConnectionOptions> = {}
 	private link?: GelatoConnection
+	/** The edited palette a knob has scrolled to (1 to 8). */
+	private editedShown = 1
 	private pending: Partial<VariableValues> = {}
 	private flushTimer?: NodeJS.Timeout
 
@@ -40,7 +43,7 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.updateFeedbacks()
 		this.updatePresets()
 		this.updateVariableDefinitions()
-		this.setVariableValues(this.values)
+		this.setVariableValues({ ...this.values, ...viewValues(this.values, this.editedShown) })
 
 		this.connect()
 	}
@@ -104,8 +107,14 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		const patch = this.pending
 		this.pending = {}
 		if (Object.keys(patch).length === 0) return
-		this.setVariableValues(patch)
+		this.setVariableValues({ ...patch, ...viewValues(this.values, this.editedShown) })
 		this.checkAllFeedbacks()
+	}
+
+	/** A knob scrolls through the edited palettes. */
+	scrollEdited(direction: ScrollDirection): void {
+		this.editedShown = scrolled(this.editedShown, Number(this.values.edited_count) || 0, direction)
+		this.setVariableValues(viewValues(this.values, this.editedShown))
 	}
 
 	private linkChanged({ state, message }: LinkStatus): void {
@@ -135,7 +144,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.flushTimer = undefined
 		this.pending = {}
 		this.values = initialValues()
-		this.setVariableValues(this.values)
+		this.editedShown = 1
+		this.setVariableValues({ ...this.values, ...viewValues(this.values, this.editedShown) })
 		this.checkAllFeedbacks()
 	}
 

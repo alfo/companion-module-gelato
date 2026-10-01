@@ -10,9 +10,28 @@ const send = <K extends Id>(id: K, options: ActionsSchema[K]['options'], locked 
 	COMMANDS[id].toOSC(options, { ...initialValues(), locked })
 
 describe('actions', () => {
-	it('has an action for every /gelato command in the spec', () => {
+	it('steps the brand letter L R G A round, from the one typed, sending an ordinary entry key', () => {
+		const step = (entry: string, direction: 'next' | 'previous') =>
+			COMMANDS.entry_brand.toOSC({ direction }, { ...initialValues(), entry })
+		assert.deepEqual(step('', 'next'), { address: '/gelato/entry/key', args: ['L'] })
+		assert.deepEqual(step('', 'previous'), { address: '/gelato/entry/key', args: ['A'] })
+		assert.deepEqual(step('L20', 'next')?.args, ['R'])
+		assert.deepEqual(step('A', 'next')?.args, ['L'])
+		assert.deepEqual(step('L', 'previous')?.args, ['A'])
+		assert.deepEqual(step('G6', 'previous')?.args, ['R'])
+	})
+
+	it('scrolling the edited palettes sends nothing', () => {
+		assert.equal(COMMANDS.edited_scroll.local, true)
+		assert.equal(COMMANDS.edited_scroll.toOSC({ direction: 'next' }, initialValues()), undefined)
+	})
+
+	it('has an action for every /gelato command in the spec, and two that only the module does', () => {
+		const moduleOnly = ['edited_scroll', 'entry_brand']
 		assert.deepEqual(
-			Object.keys(COMMANDS).sort(),
+			Object.keys(COMMANDS)
+				.filter((id) => !moduleOnly.includes(id))
+				.sort(),
 			[
 				'add_colour',
 				'add_colour_brand',

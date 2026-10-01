@@ -4,6 +4,7 @@
  */
 import type { SomeCompanionActionInputField } from '@companion-module/base'
 import type { VariableValues } from './state.js'
+import type { ScrollDirection } from './view.js'
 
 export interface OSCCommand {
 	address: string
@@ -25,6 +26,7 @@ export type ActionsSchema = {
 	add_colour: { options: { code: string } }
 	add_colour_brand: { options: { brand: BrandId; number: string } }
 	entry_key: { options: { key: string } }
+	entry_brand: { options: { direction: 'next' | 'previous' } }
 	entry_clear: { options: Record<string, never> }
 	entry_enter: { options: Record<string, never> }
 	confirm: { options: Record<string, never> }
@@ -39,6 +41,7 @@ export type ActionsSchema = {
 	preview_choose: { options: Record<string, never> }
 	preview_release: { options: Record<string, never> }
 	ping: { options: Record<string, never> }
+	edited_scroll: { options: { direction: ScrollDirection } }
 }
 
 type ActionId = keyof ActionsSchema
@@ -47,6 +50,8 @@ export interface CommandDefinition<K extends ActionId = ActionId> {
 	name: string
 	description?: string
 	options: SomeCompanionActionInputField<string>[]
+	/** Sends nothing: changes what the module shows (the edited palette a knob has scrolled to). */
+	local?: boolean
 	/** The message to send, or undefined when the options can't make one (nothing is sent). */
 	toOSC: (options: ActionsSchema[K]['options'], variables: VariableValues) => OSCCommand | undefined
 }
@@ -118,6 +123,31 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 		],
 		toOSC: ({ key }) => ({ address: '/gelato/entry/key', args: [String(key)] }),
 	},
+	entry_brand: {
+		name: 'Entry: step the brand letter',
+		description:
+			'Moves L, R, G, A on to the next or previous brand, from the one being typed (L if none). Made for a knob.',
+		options: [
+			{
+				id: 'direction',
+				type: 'dropdown',
+				label: 'Direction',
+				default: 'next',
+				choices: [
+					{ id: 'next', label: 'Next' },
+					{ id: 'previous', label: 'Previous' },
+				],
+			},
+		],
+		toOSC: ({ direction }, values) => {
+			const letters = 'LRGA'
+			const first = String(values.entry ?? '').charAt(0)
+			const typed = first === '' ? -1 : letters.indexOf(first)
+			const step = direction === 'previous' ? -1 : 1
+			const index = typed < 0 ? (step > 0 ? 0 : letters.length - 1) : (typed + step + letters.length) % letters.length
+			return { address: '/gelato/entry/key', args: [letters[index]] }
+		},
+	},
 	entry_clear: none('/gelato/entry/clear', 'Entry: clear'),
 	entry_enter: none('/gelato/entry/enter', 'Entry: enter', 'Submits the code that has been typed.'),
 	confirm: none('/gelato/confirm', 'Confirm', 'Confirms the pending write.'),
@@ -171,4 +201,24 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 	preview_choose: none('/gelato/preview/choose', 'Preview: choose', 'Records the previewed option for this type.'),
 	preview_release: none('/gelato/preview/release', 'Preview: release', 'Releases the preview channels.'),
 	ping: none('/gelato/ping', 'Ping', 'Gelato replies with its full state.'),
+	edited_scroll: {
+		name: 'Edited palettes: scroll',
+		description:
+			'Shows the next or previous edited palette in the edited_shown variables, or the first. Made for a knob.',
+		options: [
+			{
+				id: 'direction',
+				type: 'dropdown',
+				label: 'Direction',
+				default: 'next',
+				choices: [
+					{ id: 'next', label: 'Next' },
+					{ id: 'previous', label: 'Previous' },
+					{ id: 'first', label: 'Back to the first' },
+				],
+			},
+		],
+		local: true,
+		toOSC: () => undefined,
+	},
 }
