@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { COMMANDS } from '../commands.js'
-import { buildPresets } from '../presets.js'
+import { buildPresets, XL_PAGE } from '../presets.js'
 import { variableDefinitions } from '../state.js'
+import { viewDefinitions } from '../view.js'
 
 const FEEDBACK_IDS = [
 	'status_is',
@@ -40,9 +41,23 @@ describe('presets', () => {
 	it('has the sections and groups the brief asks for', () => {
 		const names = structure.map((section) => [section.name, groupsOf(section).map((group) => group.name)])
 		assert.deepEqual(names, [
-			['Gels', ['Gel keypad', 'Confirm / Cancel']],
+			['Gels', ['7 8 9', '4 5 6', '1 2 3', '0 .', 'L R G A', 'Code, Clear, Enter', 'Confirm / Cancel']],
 			['Show', ['Lock and console', 'Edited palettes', 'Build']],
 			['Preview', ['Preview options']],
+			['Stream Deck + XL', ['Displays (row 5)', 'Knobs (row 6)']],
+		])
+	})
+
+	it('lays the numpad out a row to a group, so a panel shows 7 8 9 / 4 5 6 / 1 2 3 / 0 .', () => {
+		const gels = structure.find((section) => section.name === 'Gels')
+		const rows = groupsOf(gels!)
+			.slice(0, 4)
+			.map((group) => group.presets.map((id) => presets[id].style.text))
+		assert.deepEqual(rows, [
+			['7', '8', '9'],
+			['4', '5', '6'],
+			['1', '2', '3'],
+			['0', '.'],
 		])
 	})
 
@@ -76,7 +91,7 @@ describe('presets', () => {
 		for (const [id, preset] of Object.entries(presets)) {
 			assert.equal(preset.type, 'simple')
 			for (const step of preset.steps) {
-				for (const action of [...step.down, ...step.up])
+				for (const action of [...step.down, ...step.up, ...(step.rotate_left ?? []), ...(step.rotate_right ?? [])])
 					assert.ok(action.actionId in COMMANDS, `${id}: ${String(action.actionId)}`)
 			}
 			for (const feedback of preset.feedbacks)
@@ -85,7 +100,7 @@ describe('presets', () => {
 	})
 
 	it("names only variables that exist, through the instance's label", () => {
-		const defined = new Set(Object.keys(variableDefinitions()))
+		const defined = new Set(Object.keys({ ...variableDefinitions(), ...viewDefinitions() }))
 		let count = 0
 		for (const [id, preset] of Object.entries(presets)) {
 			for (const [, label, name] of preset.style.text.matchAll(/\$\(([^:)]*):([^)]*)\)/g)) {
@@ -153,5 +168,40 @@ describe('presets', () => {
 			),
 		)
 		assert.ok(presets.lock.feedbacks.some((f) => f.feedbackId === 'lock_on'))
+	})
+
+	it('turns each knob: rotate left and right, and press, as the page says', () => {
+		const steps = (id: string) => presets[id].steps[0]
+		assert.deepEqual(steps('knob_preview').rotate_left, [{ actionId: 'preview_previous', options: {} }])
+		assert.deepEqual(steps('knob_preview').rotate_right, [{ actionId: 'preview_next', options: {} }])
+		assert.deepEqual(steps('knob_preview').down, [{ actionId: 'preview_choose', options: {} }])
+		assert.deepEqual(steps('knob_entry').rotate_right, [{ actionId: 'entry_brand', options: { direction: 'next' } }])
+		assert.deepEqual(steps('knob_edited').rotate_left, [
+			{ actionId: 'edited_scroll', options: { direction: 'previous' } },
+		])
+		assert.deepEqual(steps('knob_release').down, [{ actionId: 'preview_release', options: {} }])
+		assert.equal(steps('knob_release').rotate_left, undefined)
+		// Pressing a knob only ever confirms nothing: no knob confirms a write.
+		assert.ok(
+			!Object.keys(presets)
+				.filter((id) => id.startsWith('knob_'))
+				.some((id) => steps(id).down.some((a) => a.actionId === 'confirm')),
+		)
+	})
+
+	it('has a + XL page that only names presets that exist, with knobs under their displays', () => {
+		for (const [row, cells] of Object.entries(XL_PAGE))
+			for (const [column, id] of Object.entries(cells)) assert.ok(presets[id], `row ${row} column ${column}: ${id}`)
+		assert.deepEqual(Object.keys(XL_PAGE[5]).map(Number), [0, 2, 3, 5, 6, 8])
+		for (const column of Object.keys(XL_PAGE[5])) assert.ok(XL_PAGE[4][Number(column)], `a display over knob ${column}`)
+		// The numpad digits sit in columns 3 to 5, as on a numpad.
+		assert.deepEqual(
+			[3, 4, 5].map((c) => XL_PAGE[0][c]),
+			['key_7', 'key_8', 'key_9'],
+		)
+		assert.deepEqual(
+			[3, 4].map((c) => XL_PAGE[3][c]),
+			['key_0', 'key_dot'],
+		)
 	})
 })
