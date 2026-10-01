@@ -65,14 +65,14 @@ describe('feedback into variables', () => {
 	})
 
 	it('keeps a palette number a string, so 0.10 survives', () => {
-		const values = parseFeedback(message('/gelato/out/last', 'recorded', 'Recorded', '', '', 'O/W', '0.10', 'O/W'))
+		const values = parseFeedback(message('/gelato/out/last', 'recorded', 'Recorded', '', '', 'O/W', '0.10', 'O/W', ''))
 		assert.equal(values?.last_palette, '0.10')
 	})
 
 	it('reads last, with the result and reason', () => {
 		assert.deepEqual(
 			parseFeedback(
-				message('/gelato/out/last', 'refused', 'Refused', 'unlisted-show', 'Unlisted', 'L602', '602', 'Tour'),
+				message('/gelato/out/last', 'refused', 'Refused', 'unlisted-show', 'Unlisted', 'L602', '602', 'Tour', 'Wash'),
 			),
 			{
 				last_result: 'refused',
@@ -82,6 +82,7 @@ describe('feedback into variables', () => {
 				last_gel: 'L602',
 				last_palette: '602',
 				last_label: 'Tour',
+				last_template: 'Wash',
 			},
 		)
 	})
@@ -94,8 +95,27 @@ describe('feedback into variables', () => {
 
 	it('reads preview, progress and readback', () => {
 		assert.deepEqual(
-			parseFeedback(message('/gelato/out/preview', 'X4S', 2, 3, 'gel-match', 'Gel Match', 'L602', 'Tour 2025')),
+			parseFeedback(
+				message(
+					'/gelato/out/preview',
+					'previewing',
+					'Previewing',
+					'',
+					'',
+					'X4S',
+					2,
+					3,
+					'gel-match',
+					'Gel Match',
+					'L602',
+					'Tour 2025',
+				),
+			),
 			{
+				preview_state: 'previewing',
+				preview_state_text: 'Previewing',
+				preview_reason: '',
+				preview_reason_text: '',
 				preview_type: 'X4S',
 				preview_option: 2,
 				preview_of: 3,
