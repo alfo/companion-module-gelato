@@ -26,6 +26,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	/** Ping and reconnect timing: tests shorten it. */
 	timing: Partial<ConnectionOptions> = {}
 	private link?: GelatoConnection
+	private pending: Partial<VariableValues> = {}
+	private flushTimer?: NodeJS.Timeout
 
 	constructor(internal: unknown) {
 		super(internal)
@@ -44,6 +46,8 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	async destroy(): Promise<void> {
+		clearTimeout(this.flushTimer)
+		this.flushTimer = undefined
 		this.link?.stop()
 		this.link = undefined
 	}
@@ -83,10 +87,23 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.link.start()
 	}
 
+	/**
+	 * A ping brings a burst of ~35 messages: gather their values and tell Companion once, not once
+	 * per message.
+	 */
 	private received(message: OSCMessage): void {
 		const patch = parseFeedback(message)
 		if (!patch) return
 		Object.assign(this.values, patch)
+		this.pending = { ...this.pending, ...patch }
+		this.flushTimer ??= setTimeout(() => this.flush(), 20)
+	}
+
+	private flush(): void {
+		this.flushTimer = undefined
+		const patch = this.pending
+		this.pending = {}
+		if (Object.keys(patch).length === 0) return
 		this.setVariableValues(patch)
 		this.checkAllFeedbacks()
 	}
@@ -114,6 +131,9 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	}
 
 	private resetValues(): void {
+		clearTimeout(this.flushTimer)
+		this.flushTimer = undefined
+		this.pending = {}
 		this.values = initialValues()
 		this.setVariableValues(this.values)
 		this.checkAllFeedbacks()

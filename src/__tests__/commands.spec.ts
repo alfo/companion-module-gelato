@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { COMMANDS, ENTRY_KEYS, type ActionsSchema } from '../commands.js'
+import { COMMANDS, ENTRY_KEYS, numberArgument, type ActionsSchema } from '../commands.js'
 import { initialValues } from '../state.js'
 
 type Id = keyof ActionsSchema
@@ -100,5 +100,13 @@ describe('actions', () => {
 	it('chooses a preview option, 1 or more', () => {
 		assert.deepEqual(send('preview_option', { option: 2 }), { address: '/gelato/preview/option', args: [2] })
 		assert.deepEqual(send('preview_option', { option: 0 }), { address: '/gelato/preview/option', args: [1] })
+	})
+
+	it('sends a number as an int when it fits an int32, else as text, and never throws', () => {
+		assert.equal(numberArgument('602'), 602)
+		assert.equal(numberArgument('2147483647'), 2147483647)
+		assert.equal(numberArgument('2147483648'), '2147483648')
+		assert.equal(numberArgument('99999999999'), '99999999999')
+		assert.equal(numberArgument('0.1'), '0.1')
 	})
 })

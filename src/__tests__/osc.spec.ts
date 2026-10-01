@@ -10,6 +10,21 @@ describe('OSC messages', () => {
 		assert.equal(bytes.toString('latin1'), '/a\0\0,s\0\0L602\0\0\0\0')
 	})
 
+	it('matches hand-checked bytes for an int and a float, not just its own decoder', () => {
+		// "/a" + 2 NULs, ",i" + 2 NULs, then 1 as a big-endian int32.
+		assert.deepEqual([...encodeMessage('/a', [1])], [0x2f, 0x61, 0, 0, 0x2c, 0x69, 0, 0, 0, 0, 0, 1])
+		// 1.5 is 0x3fc00000 as an IEEE-754 float32.
+		assert.deepEqual([...encodeMessage('/a', [1.5])], [0x2f, 0x61, 0, 0, 0x2c, 0x66, 0, 0, 0x3f, 0xc0, 0, 0])
+		// -2 is 0xfffffffe.
+		assert.deepEqual([...encodeMessage('/a', [-2]).subarray(8)], [0xff, 0xff, 0xff, 0xfe])
+	})
+
+	it('sends an integer too big for an int32 as a float, without throwing', () => {
+		const bytes = encodeMessage('/a', [99_999_999_999])
+		assert.equal(bytes.toString('latin1', 4, 6), ',f')
+		assert.equal(decodeMessage(bytes).args.length, 1)
+	})
+
 	it('round-trips strings, ints and floats', () => {
 		const message = decodeMessage(encodeMessage('/gelato/out/last', ['recorded', 'Recorded', '', 'L602', 7, 0.5]))
 		assert.deepEqual(message, { address: '/gelato/out/last', args: ['recorded', 'Recorded', '', 'L602', 7, 0.5] })

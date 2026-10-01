@@ -16,7 +16,10 @@ export interface ConnectionOptions {
 	protocol: Protocol
 	/** UDP only: the local port feedback arrives on. */
 	feedbackPort: number
-	/** How often Gelato is pinged. */
+	/**
+	 * How often Gelato is pinged after the first ping. Gelato records every command, ping included,
+	 * in its recent-commands list, so this is slow: the TCP connection itself shows liveness.
+	 */
 	pingIntervalMs: number
 	/** How long a ping may go unanswered before the status says so. */
 	pingTimeoutMs: number
@@ -28,7 +31,7 @@ export const defaultOptions: Omit<ConnectionOptions, 'host'> = {
 	port: 8100,
 	protocol: 'tcp',
 	feedbackPort: 8101,
-	pingIntervalMs: 5000,
+	pingIntervalMs: 30_000,
 	pingTimeoutMs: 3000,
 	reconnectMs: 3000,
 }
@@ -55,6 +58,8 @@ export class GelatoConnection {
 	private reconnectTimer?: NodeJS.Timeout
 	private stopped = true
 	private state?: LinkState
+	private message?: string
+	private udpBound = false
 
 	constructor(
 		private readonly options: ConnectionOptions,
@@ -80,8 +85,7 @@ export class GelatoConnection {
 		clearTimeout(this.reconnectTimer)
 		this.socket?.destroy()
 		this.socket = undefined
-		this.datagrams?.close()
-		this.datagrams = undefined
+		this.closeUdp()
 		this.decoder = new SlipDecoder()
 		this.setStatus('closed')
 	}
@@ -94,7 +98,7 @@ export class GelatoConnection {
 			this.socket.write(slipEncode(packet))
 			return true
 		}
-		if (!this.datagrams) return false
+		if (!this.datagrams || !this.udpBound) return false
 		this.datagrams.send(packet, this.options.port, this.options.host)
 		return true
 	}
@@ -135,15 +139,42 @@ export class GelatoConnection {
 	private openUdp(): void {
 		const socket = dgram.createSocket('udp4')
 		this.datagrams = socket
+		this.udpBound = false
 		socket.on('message', (data) => this.received([data]))
 		socket.on('error', (error) => {
+			if (this.datagrams !== socket) return
 			this.log('warn', `UDP error: ${error.message}`)
-			this.setStatus('error', error.message)
+			if (this.udpBound) {
+				this.setStatus('error', error.message)
+				return
+			}
+			// The feedback port could not be bound (in use, say): close, say why, and try again.
+			this.closeUdp()
+			this.setStatus('error', `Feedback port ${this.options.feedbackPort}: ${error.message}`)
+			this.reconnectTimer = setTimeout(() => {
+				if (!this.stopped) this.openUdp()
+			}, this.options.reconnectMs)
 		})
 		socket.bind(this.options.feedbackPort, () => {
+			this.udpBound = true
 			this.log('debug', `Listening for feedback on UDP ${this.options.feedbackPort}`)
+			this.setStatus('connecting')
 			this.ping()
 		})
+	}
+
+	private closeUdp(): void {
+		const socket = this.datagrams
+		this.datagrams = undefined
+		this.udpBound = false
+		clearTimeout(this.pingTimer)
+		clearTimeout(this.timeoutTimer)
+		this.timeoutTimer = undefined
+		try {
+			socket?.close()
+		} catch {
+			// Never bound or already closed.
+		}
 	}
 
 	// MARK: - Ping and status
@@ -183,8 +214,9 @@ export class GelatoConnection {
 	}
 
 	private setStatus(state: LinkState, message?: string): void {
-		if (this.state === state) return
+		if (this.state === state && this.message === message) return
 		this.state = state
+		this.message = message
 		this.handlers.onStatus({ state, message })
 	}
 

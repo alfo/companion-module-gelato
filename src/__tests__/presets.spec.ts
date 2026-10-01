@@ -116,6 +116,24 @@ describe('presets', () => {
 		assert.ok(text.includes('CP${$(gelato:edited_1_palette)} - ${$(gelato:edited_1_label)}'), text)
 	})
 
+	it('evaluates the edited-slot expression: CP201 - L201 and how, or nothing', () => {
+		const text = presets.edited_1?.style.text ?? ''
+		// Companion fills each $(label:name) with the variable's value as a string; then the text is
+		// `<palette> == '' ? '' : <template>`. Read it back the way Companion's expression would.
+		const evaluate = (values: Record<string, string>): string => {
+			const filled = text.replace(/\$\(gelato:([^)]*)\)/g, (_, name: string) => JSON.stringify(values[name] ?? ''))
+			const match = /^("(?:[^"\\]|\\.)*") == '' \? '' : `(.*)`$/s.exec(filled)
+			assert.ok(match, filled)
+			if (JSON.parse(match[1]) === '') return ''
+			return match[2].replace(/\$\{("(?:[^"\\]|\\.)*")\}/g, (_, quoted: string) => JSON.parse(quoted) as string)
+		}
+		assert.equal(
+			evaluate({ edited_1_palette: '201', edited_1_label: 'L201', edited_1_how_text: 'Update' }),
+			'CP201 - L201\nUpdate',
+		)
+		assert.equal(evaluate({ edited_1_palette: '' }), '')
+	})
+
 	it('uses British spelling and "programmer" in what it says', () => {
 		const said = [
 			...structure.flatMap((section) => [

@@ -115,6 +115,56 @@ describe('connection to a fake Gelato', () => {
 		await until(() => link?.status === 'no-reply', 2000, 'no-reply')
 	})
 
+	it('TCP: carries on past a malformed frame', async () => {
+		open()
+		await until(() => link?.status === 'ok')
+		// Garbage with no address, a bad escape, then a good message.
+		gelato.pushRaw(Buffer.from([0xc0, 0x01, 0x02, 0x03, 0xc0, 0xc0, 0x2f, 0xdb, 0x01, 0xc0]))
+		gelato.push('/gelato/out/entry', ['G'])
+		await until(
+			() => messages.some((m) => m.address === '/gelato/out/entry' && m.args[0] === 'G'),
+			2000,
+			'good message',
+		)
+		assert.equal(link?.status, 'ok')
+	})
+
+	it('pings once on connect, then not again for the interval', async () => {
+		open({ pingIntervalMs: 60_000 })
+		await until(() => link?.status === 'ok')
+		await new Promise((resolve) => setTimeout(resolve, 250))
+		assert.equal(gelato.received.filter((m) => m.address === '/gelato/ping').length, 1)
+		assert.equal(defaultOptions.pingIntervalMs >= 30_000, true)
+	})
+
+	it('says why when it still cannot connect, not just that it cannot', async () => {
+		const port = gelato.port
+		await gelato.stop()
+		open({ port })
+		await until(() => states().includes('error'), 2000, 'error')
+		const first = statuses.filter((s) => s.state === 'error').length
+		// The same failure on each retry is not a new status.
+		await new Promise((resolve) => setTimeout(resolve, 300))
+		assert.equal(statuses.filter((s) => s.state === 'error').length, first)
+		gelato = new FakeGelato()
+		await gelato.start()
+	})
+
+	it('UDP: closes and retries when the feedback port is taken, and does not send meanwhile', async () => {
+		const taker = dgram.createSocket('udp4')
+		await new Promise<void>((resolve) => taker.bind(0, resolve))
+		const feedbackPort = taker.address().port
+		gelato.answers = true
+		open({ protocol: 'udp', feedbackPort })
+		await until(() => states().includes('error'), 2000, 'error')
+		assert.match(statuses.find((s) => s.state === 'error')?.message ?? '', /Feedback port/)
+		assert.equal(link?.send('/gelato/confirm'), false)
+		gelato.feedbackTo('127.0.0.1', feedbackPort)
+		await new Promise<void>((resolve) => taker.close(() => resolve()))
+		await until(() => link?.status === 'ok', 3000, 'ok once the port is free')
+		assert.equal(link?.send('/gelato/confirm'), true)
+	})
+
 	it('does not send when there is no link', () => {
 		const idle = new GelatoConnection(
 			{ ...defaultOptions, host: '127.0.0.1', port: gelato.port },

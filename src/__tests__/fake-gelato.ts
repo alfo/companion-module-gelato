@@ -86,6 +86,11 @@ export class FakeGelato {
 		this.broadcast([{ address, args }])
 	}
 
+	/** Writes raw bytes to every TCP client, for malformed frames. */
+	pushRaw(bytes: Buffer): void {
+		for (const client of this.clients) client.write(bytes)
+	}
+
 	/** Every value, in the order a ping sends them. */
 	fullState(): { address: string; args: Arg[] }[] {
 		return Object.entries(this.state).map(([address, args]) => ({ address, args }))

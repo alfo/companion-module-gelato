@@ -58,10 +58,15 @@ const none = <K extends ActionId>(address: string, name: string, description?: s
 	toOSC: () => ({ address, args: [] }),
 })
 
-/** Palette and gel numbers go as an int when they are one (`602`), else as text (`0.1`). */
-function numberArgument(text: string): string | number {
+/**
+ * Palette and gel numbers go as an int when they are one that fits an OSC int32 (`602`), else as
+ * text (`0.1`, or a number too large for an int, which Gelato will reject as a number).
+ */
+export function numberArgument(text: string): string | number {
 	const trimmed = text.trim()
-	return /^\d+$/.test(trimmed) ? Number(trimmed) : trimmed
+	if (!/^\d+$/.test(trimmed)) return trimmed
+	const number = Number(trimmed)
+	return number <= 2_147_483_647 ? number : trimmed
 }
 
 export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {

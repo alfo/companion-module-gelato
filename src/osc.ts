@@ -15,14 +15,16 @@ function encodeString(text: string): Buffer {
 	return Buffer.concat([bytes, Buffer.alloc(pad4(bytes.length + 1) + 1)])
 }
 
-/** Encodes a message. A JS integer goes as `i`, any other number as `f`, a string as `s`. */
+const isInt32 = (arg: number): boolean => Number.isInteger(arg) && arg >= -2_147_483_648 && arg <= 2_147_483_647
+
+/** Encodes a message. A JS integer that fits an int32 goes as `i`, any other number as `f`, a string as `s`. */
 export function encodeMessage(address: string, args: (string | number)[] = []): Buffer {
-	const tags = args.map((arg) => (typeof arg === 'string' ? 's' : Number.isInteger(arg) ? 'i' : 'f')).join('')
+	const tags = args.map((arg) => (typeof arg === 'string' ? 's' : isInt32(arg) ? 'i' : 'f')).join('')
 	const parts: Buffer[] = [encodeString(address), encodeString(',' + tags)]
 	for (const arg of args) {
 		if (typeof arg === 'string') {
 			parts.push(encodeString(arg))
-		} else if (Number.isInteger(arg)) {
+		} else if (isInt32(arg)) {
 			const buffer = Buffer.alloc(4)
 			buffer.writeInt32BE(arg)
 			parts.push(buffer)
