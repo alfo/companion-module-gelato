@@ -201,13 +201,19 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 		steps: { down?: Action[]; rotate_left?: Action[]; rotate_right?: Action[] },
 	): string => {
 		add(id, name, text, { size: '14', bgcolor: BRAND_BG })
+		// Companion rejects a step whose rotate_left or rotate_right is present but undefined.
 		presets[id]!.steps = [
-			{ down: steps.down ?? [], up: [], rotate_left: steps.rotate_left, rotate_right: steps.rotate_right },
+			{
+				down: steps.down ?? [],
+				up: [],
+				...(steps.rotate_left && { rotate_left: steps.rotate_left }),
+				...(steps.rotate_right && { rotate_right: steps.rotate_right }),
+			},
 		]
 		return id
 	}
 	const displays = [
-		display('display_entry', 'Display: code being typed', `CODE\n${v('entry')}`, { size: '24' }),
+		display('display_entry', 'Display: code being typed', `CODE\n${v('entry')}`, { size: '18' }),
 		display(
 			'display_pending',
 			'Display: pending',
@@ -226,6 +232,7 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 			`CONSOLE\n${v('readback_state_text')}\n${v('readback_reason_text')}`,
 			{
 				actions: press('ping'),
+				size: 12,
 				feedbacks: [
 					{ feedbackId: 'console_connected', options: {}, style: { bgcolor: COLOURS.green, color: COLOURS.white } },
 					{ feedbackId: 'readback_waiting', options: {}, style: { bgcolor: COLOURS.amber, color: COLOURS.black } },

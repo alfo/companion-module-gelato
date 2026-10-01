@@ -204,4 +204,11 @@ describe('presets', () => {
 			['key_0', 'key_dot'],
 		)
 	})
+
+	it('never leaves a rotate key present but undefined, which Companion rejects', () => {
+		for (const [id, preset] of Object.entries(presets))
+			for (const step of preset.steps)
+				for (const key of ['rotate_left', 'rotate_right'] as const)
+					if (key in step) assert.ok(step[key] !== undefined, `${id}: ${key}`)
+	})
 })
