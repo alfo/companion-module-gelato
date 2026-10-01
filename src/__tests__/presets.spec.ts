@@ -100,12 +100,20 @@ describe('presets', () => {
 
 	it('puts display words and variables on buttons, never sentences', () => {
 		for (const [id, preset] of Object.entries(presets)) {
+			if (preset.style.textExpression) continue
 			for (const line of lines(preset.style.text)) {
 				const words = line.trim().split(/\s+/).filter(Boolean)
 				assert.ok(words.length <= 2, `${id}: "${line}" is more than two words`)
 				assert.ok(!/[.!?]\s*$/.test(line) || line.trim() === '.', `${id}: "${line}" ends like a sentence`)
 			}
 		}
+	})
+
+	it('shows an edited palette as CP201 - L201, and an empty slot as nothing', () => {
+		const text = presets.edited_1?.style.text ?? ''
+		assert.equal(presets.edited_1?.style.textExpression, true)
+		assert.ok(text.startsWith("$(gelato:edited_1_palette) == '' ? ''"), text)
+		assert.ok(text.includes('CP${$(gelato:edited_1_palette)} - ${$(gelato:edited_1_label)}'), text)
 	})
 
 	it('uses British spelling and "programmer" in what it says', () => {

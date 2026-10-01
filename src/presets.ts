@@ -30,7 +30,9 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 			feedbacks?: Feedback[]
 			bgcolor?: number
 			color?: number
-			size?: 'auto' | '14' | '18' | '24' | '30' | '44'
+			size?: '14' | '18' | '24' | '30' | '44' | 12
+			/** The text is an expression, not literal text with variable references. */
+			expression?: boolean
 		} = {},
 	): string => {
 		presets[id] = {
@@ -38,7 +40,8 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 			name,
 			style: {
 				text,
-				size: options.size ?? 'auto',
+				size: options.size ?? '14',
+				textExpression: options.expression ?? false,
 				color: options.color ?? COLOURS.white,
 				bgcolor: options.bgcolor ?? KEY_BG,
 				show_topbar: false,
@@ -103,6 +106,7 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 			],
 		}),
 		add('progress', 'Progress', `${v('progress_done')} / ${v('progress_total')}`, {
+			size: '18',
 			feedbacks: [statusColour('writing', COLOURS.blue, COLOURS.white)],
 		}),
 		add('last', 'Last result', `${v('last_result_text')}\n${v('last_gel')}\n${v('last_reason_text')}`),
@@ -116,12 +120,12 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 			feedbacks: [{ feedbackId: 'lock_on', options: {}, style: { bgcolor: COLOURS.red, color: COLOURS.white } }],
 		}),
 		add('console', 'Console', 'CONSOLE', {
-			size: '18',
+			size: 12,
 			feedbacks: [
 				{ feedbackId: 'console_connected', options: {}, style: { bgcolor: COLOURS.green, color: COLOURS.white } },
 			],
 		}),
-		add('readback', 'Readback', `READBACK\n${v('readback_state_text')}`, {
+		add('readback', 'Readback', `READ\nBACK\n${v('readback_state_text')}`, {
 			feedbacks: [
 				{ feedbackId: 'readback_waiting', options: {}, style: { bgcolor: COLOURS.amber, color: COLOURS.black } },
 			],
@@ -140,8 +144,10 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 			add(
 				`edited_${slot}`,
 				`Edited palette ${slot}`,
-				`${v(`edited_${slot}_palette`)}\n${v(`edited_${slot}_how_text`)}`,
+				// A palette reads as CP201 - L201; an empty slot reads as nothing.
+				`${v(`edited_${slot}_palette`)} == '' ? '' : \`CP\${${v(`edited_${slot}_palette`)}} - \${${v(`edited_${slot}_label`)}}\n\${${v(`edited_${slot}_how_text`)}}\``,
 				{
+					expression: true,
 					feedbacks: [
 						{ feedbackId: 'edited_slot', options: { slot }, style: { bgcolor: COLOURS.amber, color: COLOURS.black } },
 					],
@@ -169,14 +175,13 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 				bgcolor: COLOURS.black,
 			},
 		),
-		add('preview_previous', 'Preview previous', 'PREVIOUS', { actions: press('preview_previous'), size: '18' }),
+		add('preview_previous', 'Preview previous', 'PREVIOUS', { actions: press('preview_previous'), size: 12 }),
 		add('preview_next', 'Preview next', 'NEXT', { actions: press('preview_next'), size: '18' }),
 		add('preview_choose', 'Preview choose', 'CHOOSE', {
 			actions: press('preview_choose'),
-			size: '18',
 			bgcolor: COLOURS.green,
 		}),
-		add('preview_release', 'Preview release', 'RELEASE', { actions: press('preview_release'), size: '18' }),
+		add('preview_release', 'Preview release', 'RELEASE', { actions: press('preview_release'), size: 12 }),
 	]
 
 	const group = (id: string, name: string, ids: string[], description?: string) => ({
