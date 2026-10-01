@@ -12,6 +12,7 @@
 		"dev": "tsc -p tsconfig.build.json --watch",
 		"lint:raw": "eslint",
 		"lint": "run lint:raw .",
+		"page": "run build && node scripts/build-page.mjs",
 		"build:test": "tsc -p tsconfig.test.json",
 		"test": "run build:test && node --test --test-reporter=spec \"dist-test/**/*.spec.js\""
 	},
