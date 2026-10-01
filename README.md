@@ -6,7 +6,7 @@ This module is private and not in Companion's module list. Install it as a devel
 
 ## Install as a developer module
 
-You need Companion 4.x (module API 2) and Node 22 with Corepack, which ships with Node.
+You need Companion 5.x (module API 2) and Node 22 with Corepack, which ships with Node.
 
 1. Pick a folder for developer modules, such as `~/companion-modules`, and clone this repo into it:
 
