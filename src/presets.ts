@@ -181,6 +181,26 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 				bgcolor: COLOURS.black,
 			},
 		),
+		add(
+			'preview_state',
+			'Preview state and reason',
+			`PREVIEW\n${v('preview_state_text')}\n${v('preview_reason_text')}`,
+			{
+				bgcolor: COLOURS.black,
+				feedbacks: [
+					{
+						feedbackId: 'preview_state_is',
+						options: { state: 'previewing' },
+						style: { bgcolor: COLOURS.green, color: COLOURS.white },
+					},
+					{
+						feedbackId: 'preview_state_is',
+						options: { state: 'refused' },
+						style: { bgcolor: COLOURS.red, color: COLOURS.white },
+					},
+				],
+			},
+		),
 		add('preview_previous', 'Preview previous', 'PREVIOUS', { actions: press('preview_previous'), size: 12 }),
 		add('preview_next', 'Preview next', 'NEXT', { actions: press('preview_next'), size: '18' }),
 		add('preview_choose', 'Preview choose', 'CHOOSE', {

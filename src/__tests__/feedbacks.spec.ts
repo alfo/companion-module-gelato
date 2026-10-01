@@ -10,6 +10,8 @@ describe('feedbacks', () => {
 		assert.equal(CHECKS.lock_on(values), false)
 		assert.equal(CHECKS.console_connected(values), false)
 		assert.equal(CHECKS.readback_waiting(values), false)
+		for (const state of ['previewing', 'refused', 'released', 'idle'] as const)
+			assert.equal(CHECKS.preview_state_is(values, state), false)
 		assert.equal(CHECKS.edited_any(values), false)
 		assert.equal(CHECKS.new_types(values), false)
 		for (let slot = 1; slot <= 8; slot++) assert.equal(CHECKS.edited_slot(values, slot), false)
@@ -40,6 +42,20 @@ describe('feedbacks', () => {
 		)
 		assert.equal(CHECKS.edited_slot(values, 1), true)
 		assert.equal(CHECKS.edited_slot(values, 2), false)
+	})
+
+	it('follow the preview state, and the reason it was refused', () => {
+		const values = initialValues()
+		Object.assign(
+			values,
+			parseFeedback({
+				address: '/gelato/out/preview',
+				args: ['refused', 'Refused', 'programmer-mode', 'Not Live', 'X4S', 0, 0, '', '', '', ''],
+			}),
+		)
+		assert.equal(CHECKS.preview_state_is(values, 'refused'), true)
+		assert.equal(CHECKS.preview_state_is(values, 'previewing'), false)
+		assert.equal(values.preview_reason_text, 'Not Live')
 	})
 
 	it('turn off again when a list slot is cleared', () => {

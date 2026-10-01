@@ -96,6 +96,7 @@ describe('the module against a fake Gelato', () => {
 			'edited_slot',
 			'lock_on',
 			'new_types',
+			'preview_state_is',
 			'readback_waiting',
 			'status_is',
 		])

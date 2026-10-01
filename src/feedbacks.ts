@@ -7,12 +7,15 @@ export type FeedbacksSchema = {
 	lock_on: { type: 'boolean'; options: Record<string, never> }
 	console_connected: { type: 'boolean'; options: Record<string, never> }
 	readback_waiting: { type: 'boolean'; options: Record<string, never> }
+	preview_state_is: { type: 'boolean'; options: { state: PreviewStateCode } }
 	edited_any: { type: 'boolean'; options: Record<string, never> }
 	edited_slot: { type: 'boolean'; options: { slot: number } }
 	new_types: { type: 'boolean'; options: Record<string, never> }
 }
 
 export type StatusCode = 'idle' | 'awaiting-confirm' | 'writing' | 'error'
+
+export type PreviewStateCode = 'previewing' | 'refused' | 'released' | 'idle'
 
 export const COLOURS = {
 	black: combineRgb(0, 0, 0),
@@ -30,6 +33,7 @@ export const CHECKS = {
 	lock_on: (values: VariableValues): boolean => values.locked === 1,
 	console_connected: (values: VariableValues): boolean => values.eos_connected === 1,
 	readback_waiting: (values: VariableValues): boolean => values.readback_state === 'waiting',
+	preview_state_is: (values: VariableValues, state: PreviewStateCode): boolean => values.preview_state === state,
 	edited_any: (values: VariableValues): boolean => Number(values.edited_count) > 0,
 	edited_slot: (values: VariableValues, slot: number): boolean =>
 		values[`edited_${slot}_palette`] !== '' && values[`edited_${slot}_palette`] !== undefined,
@@ -80,6 +84,27 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			defaultStyle: { bgcolor: COLOURS.amber, color: COLOURS.black },
 			options: [],
 			callback: () => CHECKS.readback_waiting(self.values),
+		},
+		preview_state_is: {
+			type: 'boolean',
+			name: 'Preview state is',
+			description: 'An option is on the light, the preview was refused, or it was released',
+			defaultStyle: { bgcolor: COLOURS.green, color: COLOURS.white },
+			options: [
+				{
+					id: 'state',
+					type: 'dropdown',
+					label: 'State',
+					default: 'previewing',
+					choices: [
+						{ id: 'previewing', label: 'Previewing' },
+						{ id: 'refused', label: 'Refused' },
+						{ id: 'released', label: 'Released' },
+						{ id: 'idle', label: 'Idle' },
+					],
+				},
+			],
+			callback: ({ options }) => CHECKS.preview_state_is(self.values, options.state),
 		},
 		edited_any: {
 			type: 'boolean',

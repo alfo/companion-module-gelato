@@ -9,6 +9,7 @@ const FEEDBACK_IDS = [
 	'status_is',
 	'lock_on',
 	'console_connected',
+	'preview_state_is',
 	'readback_waiting',
 	'edited_any',
 	'edited_slot',
