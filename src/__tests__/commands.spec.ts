@@ -10,7 +10,7 @@ const send = <K extends Id>(id: K, options: ActionsSchema[K]['options'], locked 
 	COMMANDS[id].toOSC(options, { ...initialValues(), locked })
 
 describe('actions', () => {
-	it('steps the brand letter L R G A round, from the one typed, sending an ordinary entry key', () => {
+	it('steps the brand L R SG CG G A round, from the one typed, sending an ordinary entry key', () => {
 		const step = (entry: string, direction: 'next' | 'previous') =>
 			COMMANDS.entry_brand.toOSC({ direction }, { ...initialValues(), entry })
 		assert.deepEqual(step('', 'next'), { address: '/gelato/entry/key', args: ['L'] })
@@ -18,7 +18,11 @@ describe('actions', () => {
 		assert.deepEqual(step('L20', 'next')?.args, ['R'])
 		assert.deepEqual(step('A', 'next')?.args, ['L'])
 		assert.deepEqual(step('L', 'previous')?.args, ['A'])
-		assert.deepEqual(step('G6', 'previous')?.args, ['R'])
+		assert.deepEqual(step('R', 'next')?.args, ['SG'])
+		assert.deepEqual(step('SG6', 'next')?.args, ['CG'])
+		assert.deepEqual(step('SG6', 'previous')?.args, ['R'])
+		assert.deepEqual(step('CG3203', 'next')?.args, ['G'])
+		assert.deepEqual(step('G6', 'previous')?.args, ['CG'])
 	})
 
 	it('scrolling the edited palettes sends nothing', () => {
@@ -73,11 +77,37 @@ describe('actions', () => {
 			args: ['202.5'],
 		})
 		assert.deepEqual(send('add_colour_brand', { brand: 'apollo', number: '7' })?.address, '/gelato/colour/add/apollo')
+		assert.deepEqual(send('add_colour_brand', { brand: 'supergel', number: '6' }), {
+			address: '/gelato/colour/add/supergel',
+			args: [6],
+		})
+		assert.deepEqual(send('add_colour_brand', { brand: 'roscoother', number: '3203' }), {
+			address: '/gelato/colour/add/roscoother',
+			args: [3203],
+		})
 		assert.equal(send('add_colour_brand', { brand: 'lee', number: '' }), undefined)
 	})
 
-	it('sends entry keys: L R G A, 0 to 9 and the point', () => {
-		assert.deepEqual(ENTRY_KEYS, ['L', 'R', 'G', 'A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.'])
+	it('sends entry keys: L R SG CG G A, 0 to 9 and the point', () => {
+		assert.deepEqual(ENTRY_KEYS, [
+			'L',
+			'R',
+			'SG',
+			'CG',
+			'G',
+			'A',
+			'0',
+			'1',
+			'2',
+			'3',
+			'4',
+			'5',
+			'6',
+			'7',
+			'8',
+			'9',
+			'.',
+		])
 		for (const key of ENTRY_KEYS)
 			assert.deepEqual(send('entry_key', { key }), { address: '/gelato/entry/key', args: [key] })
 	})

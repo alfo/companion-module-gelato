@@ -42,7 +42,7 @@ describe('presets', () => {
 	it('has the sections and groups the brief asks for', () => {
 		const names = structure.map((section) => [section.name, groupsOf(section).map((group) => group.name)])
 		assert.deepEqual(names, [
-			['Gels', ['7 8 9', '4 5 6', '1 2 3', '0 .', 'L R G A', 'Code, Clear, Enter', 'Confirm / Cancel']],
+			['Gels', ['7 8 9', '4 5 6', '1 2 3', '0 .', 'L R SG CG G A', 'Code, Clear, Enter', 'Confirm / Cancel']],
 			['Show', ['Lock and console', 'Edited palettes', 'Build']],
 			['Preview', ['Preview options']],
 			['Stream Deck + XL', ['Displays (row 5)', 'Knobs (row 6)']],
@@ -62,12 +62,12 @@ describe('presets', () => {
 		])
 	})
 
-	it('has the whole gel keypad: L R G A, 0 to 9, point, Clear, Enter', () => {
+	it('has the whole gel keypad: L R SG CG G A, 0 to 9, point, Clear, Enter', () => {
 		const keys = Object.values(presets)
 			.flatMap((preset) => preset.steps[0].down)
 			.filter((action) => action.actionId === 'entry_key')
 			.map((action) => (action.options as { key: string }).key)
-		assert.deepEqual([...keys].sort(), [...'LRGA0123456789.'].sort())
+		assert.deepEqual([...keys].sort(), ['L', 'R', 'SG', 'CG', 'G', 'A', ...'0123456789.'].sort())
 		for (const id of ['entry_clear', 'entry_enter']) assert.ok(presets[id], id)
 	})
 

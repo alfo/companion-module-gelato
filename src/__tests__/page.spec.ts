@@ -25,6 +25,14 @@ describe('the Stream Deck + XL page file', () => {
 			assert.deepEqual(Object.keys(page.page.controls[Number(row)] ?? {}), Object.keys(cells))
 	})
 
+	it('puts all six brand keys on the page, in stepping order, and Clear and Enter by the numpad', () => {
+		assert.deepEqual(
+			[0, 1, 2].map((column) => XL_PAGE[0]?.[column]).concat([0, 1, 2].map((column) => XL_PAGE[1]?.[column])),
+			['key_L', 'key_R', 'key_SG', 'key_CG', 'key_G', 'key_A'],
+		)
+		assert.deepEqual([XL_PAGE[3]?.[5], XL_PAGE[3]?.[6]], ['entry_clear', 'entry_enter'])
+	})
+
 	it('turns only the six knobs into rotary buttons, and presses real actions of the connection', () => {
 		const rotary = Object.entries(page.page.controls).flatMap(([row, cells]) =>
 			Object.entries(cells)
