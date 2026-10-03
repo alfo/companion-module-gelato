@@ -11,16 +11,21 @@ export interface OSCCommand {
 	args: (string | number)[]
 }
 
-export type BrandId = 'lee' | 'rosco' | 'gam' | 'apollo'
+export type BrandId = 'lee' | 'rosco' | 'supergel' | 'roscoother' | 'gam' | 'apollo'
 
 export const BRANDS: { id: BrandId; label: string }[] = [
 	{ id: 'lee', label: 'Lee (L)' },
-	{ id: 'rosco', label: 'Rosco (R)' },
+	{ id: 'rosco', label: 'Roscolux (R)' },
+	{ id: 'supergel', label: 'Rosco Supergel (SG)' },
+	{ id: 'roscoother', label: 'Rosco Other (CG)' },
 	{ id: 'gam', label: 'GAM (G)' },
 	{ id: 'apollo', label: 'Apollo (A)' },
 ]
 
-export const ENTRY_KEYS = ['L', 'R', 'G', 'A', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
+/** The brand keys, in the order the brand step goes through them. */
+export const BRAND_KEYS = ['L', 'R', 'SG', 'CG', 'G', 'A']
+
+export const ENTRY_KEYS = [...BRAND_KEYS, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
 
 export type ActionsSchema = {
 	add_colour: { options: { code: string } }
@@ -85,7 +90,7 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 				label: 'Gel code',
 				default: 'L201',
 				useVariables: true,
-				tooltip: 'A brand letter and number, such as L201, R4590 or G202',
+				tooltip: 'A brand and number, such as L201, R4590, SG6, CG3203 or G202',
 			},
 		],
 		toOSC: ({ code }) =>
@@ -111,7 +116,7 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 	},
 	entry_key: {
 		name: 'Entry: key',
-		description: 'Adds one key to the code being typed. A brand letter starts a new code.',
+		description: 'Adds one key to the code being typed. A brand key starts a new code.',
 		options: [
 			{
 				id: 'key',
@@ -124,9 +129,9 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 		toOSC: ({ key }) => ({ address: '/gelato/entry/key', args: [String(key)] }),
 	},
 	entry_brand: {
-		name: 'Entry: step the brand letter',
+		name: 'Entry: step the brand',
 		description:
-			'Moves L, R, G, A on to the next or previous brand, from the one being typed (L if none). Made for a knob.',
+			'Moves L, R, SG, CG, G, A on to the next or previous brand, from the one being typed (L if none). Made for a knob.',
 		options: [
 			{
 				id: 'direction',
@@ -140,12 +145,11 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 			},
 		],
 		toOSC: ({ direction }, values) => {
-			const letters = 'LRGA'
-			const first = String(values.entry ?? '').charAt(0)
-			const typed = first === '' ? -1 : letters.indexOf(first)
+			const typed = BRAND_KEYS.indexOf(/^(SG|CG|[LRGA])/.exec(String(values.entry ?? ''))?.[1] ?? '')
 			const step = direction === 'previous' ? -1 : 1
-			const index = typed < 0 ? (step > 0 ? 0 : letters.length - 1) : (typed + step + letters.length) % letters.length
-			return { address: '/gelato/entry/key', args: [letters[index]] }
+			const index =
+				typed < 0 ? (step > 0 ? 0 : BRAND_KEYS.length - 1) : (typed + step + BRAND_KEYS.length) % BRAND_KEYS.length
+			return { address: '/gelato/entry/key', args: [BRAND_KEYS[index]] }
 		},
 	},
 	entry_clear: none('/gelato/entry/clear', 'Entry: clear'),

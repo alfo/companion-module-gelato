@@ -2,6 +2,7 @@ import { combineRgb, type CompanionPresetDefinitions, type CompanionPresetSectio
 import type ModuleInstance from './main.js'
 import type { ModuleSchema } from './main.js'
 import { COLOURS } from './feedbacks.js'
+import { BRAND_KEYS } from './commands.js'
 import { LIST_SLOTS } from './state.js'
 
 type Presets = CompanionPresetDefinitions<ModuleSchema>
@@ -80,7 +81,7 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 	const keyPreset = (key: string): string =>
 		add(`key_${key === '.' ? 'dot' : key}`, `Key ${key}`, key, {
 			actions: press('entry_key', { key }),
-			bgcolor: 'LRGA'.includes(key) ? BRAND_BG : KEY_BG,
+			bgcolor: BRAND_KEYS.includes(key) ? BRAND_BG : KEY_BG,
 			size: '44',
 		})
 	const numpad = [
@@ -89,7 +90,7 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 		['1', '2', '3'],
 		['0', '.'],
 	].map((row) => row.map(keyPreset))
-	const brands = [...'LRGA'].map(keyPreset)
+	const brands = BRAND_KEYS.map(keyPreset)
 	const entry = [
 		add('entry_display', 'Code being typed', `CODE\n${v('entry')}`, { size: '18', bgcolor: COLOURS.black }),
 		add('entry_clear', 'Clear', 'CLEAR', { actions: press('entry_clear'), size: '18' }),
@@ -279,7 +280,7 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 		display('display_lock', 'Display: lock', 'LOCK', { size: '24', feedbacks: [lockFeedback] }),
 	]
 	const knobs = [
-		knob('knob_entry', 'Knob: brand letter, press to clear', 'BRAND\nPRESS CLEAR', {
+		knob('knob_entry', 'Knob: brand, press to clear', 'BRAND\nPRESS CLEAR', {
 			down: press('entry_clear'),
 			rotate_left: press('entry_brand', { direction: 'previous' }),
 			rotate_right: press('entry_brand', { direction: 'next' }),
@@ -316,7 +317,7 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
 				group('numpad_456', '4 5 6', numpad[1]),
 				group('numpad_123', '1 2 3', numpad[2]),
 				group('numpad_0', '0 .', numpad[3]),
-				group('brands', 'L R G A', brands, 'The brand letters, which start a new code.'),
+				group('brands', 'L R SG CG G A', brands, 'The brand keys, which start a new code.'),
 				group('entry', 'Code, Clear, Enter', entry, 'Type a code from the keys, then Enter.'),
 				group('confirm', 'Confirm / Cancel', confirm, 'What is pending, and the result.'),
 			],
@@ -353,13 +354,14 @@ export function buildPresets(label: string): { structure: CompanionPresetSection
  * The Stream Deck + XL page: preset ids by [row][column], 0-indexed, in Companion's grid. Rows 0 to 3
  * are the keys, row 4 the nine display cells, row 5 the six knobs, under display columns 0, 2, 3, 5,
  * 6 and 8 (the cells between knobs, 1, 4 and 7, are displays only). The digits are a clean numpad
- * in columns 3 to 5.
+ * in columns 3 to 5; the six brand keys fill the top two rows of columns 0 to 2 in their stepping
+ * order, and Clear and Enter sit beside 0 and the point.
  */
 export const XL_PAGE: Record<number, Record<number, string>> = {
 	0: {
 		0: 'key_L',
 		1: 'key_R',
-		2: 'entry_clear',
+		2: 'key_SG',
 		3: 'key_7',
 		4: 'key_8',
 		5: 'key_9',
@@ -368,9 +370,9 @@ export const XL_PAGE: Record<number, Record<number, string>> = {
 		8: 'lock',
 	},
 	1: {
-		0: 'key_G',
-		1: 'key_A',
-		2: 'entry_enter',
+		0: 'key_CG',
+		1: 'key_G',
+		2: 'key_A',
 		3: 'key_4',
 		4: 'key_5',
 		5: 'key_6',
@@ -389,7 +391,16 @@ export const XL_PAGE: Record<number, Record<number, string>> = {
 		7: 'build_new',
 		8: 'build_rerun',
 	},
-	3: { 0: 'edited_4', 1: 'edited_5', 2: 'edited_6', 3: 'key_0', 4: 'key_dot', 6: 'ping' },
+	3: {
+		0: 'edited_4',
+		1: 'edited_5',
+		2: 'edited_6',
+		3: 'key_0',
+		4: 'key_dot',
+		5: 'entry_clear',
+		6: 'entry_enter',
+		8: 'ping',
+	},
 	4: {
 		0: 'display_entry',
 		1: 'display_pending',

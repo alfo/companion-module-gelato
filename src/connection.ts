@@ -17,8 +17,8 @@ export interface ConnectionOptions {
 	/** UDP only: the local port feedback arrives on. */
 	feedbackPort: number
 	/**
-	 * How often Gelato is pinged after the first ping. Gelato records every command, ping included,
-	 * in its recent-commands list, so this is slow: the TCP connection itself shows liveness.
+	 * How often Gelato is pinged after the first ping. Gelato answers a ping without logging it,
+	 * so polling is cheap; it is still slow, as the TCP connection itself shows liveness.
 	 */
 	pingIntervalMs: number
 	/** How long a ping may go unanswered before the status says so. */

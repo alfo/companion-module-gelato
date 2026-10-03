@@ -62,13 +62,13 @@ While Gelato's show-mode lock is on, it accepts only **Lock off** and **Ping**. 
 
 ## What is in the module
 
-**Actions**: one for every `/gelato/...` command: add a colour (by code, or by brand and number), entry key, clear, enter, confirm, cancel, lock (on, off, toggle), apply a template, re-run the build, build new types, ping, and preview option, next, previous, choose and release. Two more change only what the module shows, and send nothing: _Entry: step the brand letter_ (L, R, G, A, from the code being typed) and _Edited palettes: scroll_ (next, previous, back to the first). They are made for knobs.
+**Actions**: one for every `/gelato/...` command: add a colour (by code, or by brand and number), entry key, clear, enter, confirm, cancel, lock (on, off, toggle), apply a template, re-run the build, build new types, ping, and preview option, next, previous, choose and release. Two more change only what the module shows, and send nothing: _Entry: step the brand_ (L, R, SG, CG, G, A, from the code being typed) and _Edited palettes: scroll_ (next, previous, back to the first). They are made for knobs.
 
 **Feedbacks** (boolean): status is awaiting confirm, writing or error; lock on; console connected; readback waiting; preview state (previewing, refused, released or idle); edited palettes (any, or a slot); new types in the rig.
 
 **Variables**: every value Gelato reports, including each slot of the edited-palettes and new-types lists (eight each; slots past the count are empty). Examples: `entry`, `status_text`, `pending_gel`, `pending_kind_text`, `last_result_text`, `locked`, `eos_connected`, `edited_count`, `edited_1_palette`, `edited_1_how_text`, `build_new_count`, `preview_state_text`, `preview_reason_text`. `edited_shown`, `edited_shown_palette`, `edited_shown_label`, `edited_shown_how_text` and `edited_shown_user` hold the edited palette a knob has scrolled to (shown as CP201 - L201 in `edited_shown_label`). The full list is on the connection's **Variables** page.
 
-**Presets**: _Gels_ (gel keypad `L R G A 0–9 .` with Clear and Enter; Confirm and Cancel showing what is pending; status, progress and last result), _Show_ (Lock, console, readback, edited palettes 1–8, Build new, Re-run build), _Preview_ (state and reason, previous, next, choose, release), and _Stream Deck + XL_ (the displays and knobs below). The keypad presets come in groups of a numpad row (7 8 9, 4 5 6, 1 2 3, 0 .), so the preset panel lays them out as a numpad. Button text is display words and variables, never sentences.
+**Presets**: _Gels_ (gel keypad `L R SG CG G A 0–9 .` with Clear and Enter; Confirm and Cancel showing what is pending; status, progress and last result), _Show_ (Lock, console, readback, edited palettes 1–8, Build new, Re-run build), _Preview_ (state and reason, previous, next, choose, release), and _Stream Deck + XL_ (the displays and knobs below). The keypad presets come in groups of a numpad row (7 8 9, 4 5 6, 1 2 3, 0 .), so the preset panel lays them out as a numpad. Button text is display words and variables, never sentences.
 
 Palette numbers are strings, so `0.10` survives. Nothing is `""` or `0`.
 
@@ -80,11 +80,11 @@ Palette numbers are strings, so `0.10` survives. Nothing is `""` or `0`.
 2. In **Settings ▸ Buttons**, set the grid to **9 columns and 6 rows**.
 3. In **Import / Export**, choose **Import**, pick the file, then pick the page to replace and **Link to Gelato** for the connection.
 
-The first four rows are keys: the numpad digits in columns 4 to 6, with L R G A, Clear and Enter on the left, and Confirm, Cancel, Lock, preview, Build and Ping on the right. Row 5 is the displays and row 6 the knobs, one knob under each display. The deck has nine display cells but six knobs, so the cells at columns 2, 5 and 8 (pending, console and last result) have no knob and are pressed on the display.
+The first four rows are keys: the numpad digits in columns 4 to 6, with the six brand keys (L R SG / CG G A) on the left, Clear and Enter beside 0 and the point, and Confirm, Cancel, Lock, preview, Build and Ping on the right. Row 5 is the displays and row 6 the knobs, one knob under each display. The deck has nine display cells but six knobs, so the cells at columns 2, 5 and 8 (pending, console and last result) have no knob and are pressed on the display.
 
 | Display (row 5) | Shows                                             | Knob (row 6)                                   |
 | --------------- | ------------------------------------------------- | ---------------------------------------------- |
-| Entry           | The code being typed                              | Turn: step L, R, G, A. Press: clear            |
+| Entry           | The code being typed                              | Turn: step L, R, SG, CG, G, A. Press: clear    |
 | Pending         | Kind, gel, palette and ghosts, coloured by status | Not under a knob                               |
 | Preview         | Type, option _n_ of _total_, gel                  | Turn: previous or next option. Press: choose   |
 | Release         | The type being previewed                          | Press: release                                 |
