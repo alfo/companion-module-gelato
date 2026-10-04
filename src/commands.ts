@@ -28,8 +28,8 @@ export const BRAND_KEYS = ['L', 'R', 'SG', 'CG', 'G', 'A']
 export const ENTRY_KEYS = [...BRAND_KEYS, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
 
 export type ActionsSchema = {
-	add_colour: { options: { code: string } }
-	add_colour_brand: { options: { brand: BrandId; number: string } }
+	add_color: { options: { code: string } }
+	add_color_brand: { options: { brand: BrandId; number: string } }
 	entry_key: { options: { key: string } }
 	entry_brand: { options: { direction: 'next' | 'previous' } }
 	entry_clear: { options: Record<string, never> }
@@ -80,9 +80,9 @@ export function numberArgument(text: string): string | number {
 }
 
 export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
-	add_colour: {
-		name: 'Add colour (gel code)',
-		description: 'Adds a colour live, as the tech panel does. A write waits for Confirm unless Gelato skips it.',
+	add_color: {
+		name: 'Add color (gel code)',
+		description: 'Adds a color live, as the tech panel does. A write waits for Confirm unless Gelato skips it.',
 		options: [
 			{
 				id: 'code',
@@ -94,11 +94,11 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 			},
 		],
 		toOSC: ({ code }) =>
-			String(code).trim() === '' ? undefined : { address: '/gelato/colour/add', args: [String(code).trim()] },
+			String(code).trim() === '' ? undefined : { address: '/gelato/color/add', args: [String(code).trim()] },
 	},
-	add_colour_brand: {
-		name: 'Add colour (brand and number)',
-		description: 'Same as Add colour, with the brand chosen from a list.',
+	add_color_brand: {
+		name: 'Add color (brand and number)',
+		description: 'Same as Add color, with the brand chosen from a list.',
 		options: [
 			{
 				id: 'brand',
@@ -112,7 +112,7 @@ export const COMMANDS: { [K in ActionId]: CommandDefinition<K> } = {
 		toOSC: ({ brand, number }) =>
 			String(number).trim() === ''
 				? undefined
-				: { address: `/gelato/colour/add/${brand}`, args: [numberArgument(String(number))] },
+				: { address: `/gelato/color/add/${brand}`, args: [numberArgument(String(number))] },
 	},
 	entry_key: {
 		name: 'Entry: key',

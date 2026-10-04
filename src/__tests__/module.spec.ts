@@ -132,7 +132,7 @@ describe('the module against a fake Gelato', () => {
 		await fake.press('entry_key', { key: '6' })
 		await fake.press('entry_enter')
 		await fake.press('confirm')
-		await fake.press('add_colour_brand', { brand: 'rosco', number: '4590' })
+		await fake.press('add_color_brand', { brand: 'rosco', number: '4590' })
 		await fake.press('preview_next')
 		await until(() => gelato.received.some((m) => m.address === '/gelato/preview/next'), 2000, 'the commands')
 		const sent = gelato.received.filter((m) => m.address !== '/gelato/ping').map((m) => [m.address, ...m.args])
@@ -141,7 +141,7 @@ describe('the module against a fake Gelato', () => {
 			['/gelato/entry/key', '6'],
 			['/gelato/entry/enter'],
 			['/gelato/confirm'],
-			['/gelato/colour/add/rosco', 4590],
+			['/gelato/color/add/rosco', 4590],
 			['/gelato/preview/next'],
 		])
 	})
@@ -154,7 +154,7 @@ describe('the module against a fake Gelato', () => {
 
 		gelato.push('/gelato/out/entry', ['L60'])
 		gelato.push('/gelato/out/status', ['awaiting-confirm', 'Confirm'])
-		gelato.push('/gelato/out/pending', ['colour', 'Colour', 'L602', '602', 'Tour', '', 9, 3, 0, 0])
+		gelato.push('/gelato/out/pending', ['color', 'Color', 'L602', '602', 'Tour', '', 9, 3, 0, 0])
 		gelato.push('/gelato/out/lock', [1])
 		gelato.push('/gelato/out/eos/connected', [1])
 		gelato.push('/gelato/out/edited/count', [2])
