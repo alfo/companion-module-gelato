@@ -37,12 +37,12 @@ describe('feedback into variables', () => {
 		})
 	})
 
-	it('reads a colour pending: one fixed layout for every kind', () => {
+	it('reads a color pending: one fixed layout for every kind', () => {
 		assert.deepEqual(
-			parseFeedback(message('/gelato/out/pending', 'colour', 'Colour', 'L602', '602', 'Tour 2025', '', 9, 3, 0, 0)),
+			parseFeedback(message('/gelato/out/pending', 'color', 'Color', 'L602', '602', 'Tour 2025', '', 9, 3, 0, 0)),
 			{
-				pending_kind: 'colour',
-				pending_kind_text: 'Colour',
+				pending_kind: 'color',
+				pending_kind_text: 'Color',
 				pending_gel: 'L602',
 				pending_palette: '602',
 				pending_label: 'Tour 2025',
@@ -200,7 +200,7 @@ describe('feedback into variables', () => {
 	it('coerces the other type rather than losing the value', () => {
 		assert.equal(parseFeedback(message('/gelato/out/progress', '5', 12.7))?.progress_done, 5)
 		assert.equal(parseFeedback(message('/gelato/out/progress', '5', 12.7))?.progress_total, 12)
-		assert.equal(parseFeedback(message('/gelato/out/pending', 'colour', 'Colour', 'L1', 602))?.pending_palette, '602')
+		assert.equal(parseFeedback(message('/gelato/out/pending', 'color', 'Color', 'L1', 602))?.pending_palette, '602')
 	})
 
 	it('ignores addresses it does not know, and slots out of range', () => {

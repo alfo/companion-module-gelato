@@ -37,8 +37,8 @@ describe('actions', () => {
 				.filter((id) => !moduleOnly.includes(id))
 				.sort(),
 			[
-				'add_colour',
-				'add_colour_brand',
+				'add_color',
+				'add_color_brand',
 				'build_new',
 				'build_rerun',
 				'cancel',
@@ -58,34 +58,34 @@ describe('actions', () => {
 		)
 	})
 
-	it('adds a colour by code, trimmed', () => {
-		assert.deepEqual(send('add_colour', { code: ' L602 ' }), { address: '/gelato/colour/add', args: ['L602'] })
-		assert.equal(send('add_colour', { code: '  ' }), undefined)
+	it('adds a color by code, trimmed', () => {
+		assert.deepEqual(send('add_color', { code: ' L602 ' }), { address: '/gelato/color/add', args: ['L602'] })
+		assert.equal(send('add_color', { code: '  ' }), undefined)
 	})
 
-	it('adds a colour by brand and number, the number as an int when it is one', () => {
-		assert.deepEqual(send('add_colour_brand', { brand: 'lee', number: '602' }), {
-			address: '/gelato/colour/add/lee',
+	it('adds a color by brand and number, the number as an int when it is one', () => {
+		assert.deepEqual(send('add_color_brand', { brand: 'lee', number: '602' }), {
+			address: '/gelato/color/add/lee',
 			args: [602],
 		})
-		assert.deepEqual(send('add_colour_brand', { brand: 'rosco', number: '4590' }), {
-			address: '/gelato/colour/add/rosco',
+		assert.deepEqual(send('add_color_brand', { brand: 'rosco', number: '4590' }), {
+			address: '/gelato/color/add/rosco',
 			args: [4590],
 		})
-		assert.deepEqual(send('add_colour_brand', { brand: 'gam', number: '202.5' }), {
-			address: '/gelato/colour/add/gam',
+		assert.deepEqual(send('add_color_brand', { brand: 'gam', number: '202.5' }), {
+			address: '/gelato/color/add/gam',
 			args: ['202.5'],
 		})
-		assert.deepEqual(send('add_colour_brand', { brand: 'apollo', number: '7' })?.address, '/gelato/colour/add/apollo')
-		assert.deepEqual(send('add_colour_brand', { brand: 'supergel', number: '6' }), {
-			address: '/gelato/colour/add/supergel',
+		assert.deepEqual(send('add_color_brand', { brand: 'apollo', number: '7' })?.address, '/gelato/color/add/apollo')
+		assert.deepEqual(send('add_color_brand', { brand: 'supergel', number: '6' }), {
+			address: '/gelato/color/add/supergel',
 			args: [6],
 		})
-		assert.deepEqual(send('add_colour_brand', { brand: 'roscoother', number: '3203' }), {
-			address: '/gelato/colour/add/roscoother',
+		assert.deepEqual(send('add_color_brand', { brand: 'roscoother', number: '3203' }), {
+			address: '/gelato/color/add/roscoother',
 			args: [3203],
 		})
-		assert.equal(send('add_colour_brand', { brand: 'lee', number: '' }), undefined)
+		assert.equal(send('add_color_brand', { brand: 'lee', number: '' }), undefined)
 	})
 
 	it('sends entry keys: L R SG CG G A, 0 to 9 and the point', () => {

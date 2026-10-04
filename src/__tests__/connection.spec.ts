@@ -59,9 +59,9 @@ describe('connection to a fake Gelato', () => {
 	it('TCP: sends a command SLIP-framed, and takes pushed feedback', async () => {
 		open()
 		await until(() => link?.status === 'ok')
-		assert.equal(link?.send('/gelato/colour/add', ['L602']), true)
-		await until(() => gelato.received.some((m) => m.address === '/gelato/colour/add'), 2000, 'the command')
-		assert.deepEqual(gelato.received.find((m) => m.address === '/gelato/colour/add')?.args, ['L602'])
+		assert.equal(link?.send('/gelato/color/add', ['L602']), true)
+		await until(() => gelato.received.some((m) => m.address === '/gelato/color/add'), 2000, 'the command')
+		assert.deepEqual(gelato.received.find((m) => m.address === '/gelato/color/add')?.args, ['L602'])
 		gelato.push('/gelato/out/entry', ['L60'])
 		await until(() => messages.some((m) => m.address === '/gelato/out/entry' && m.args[0] === 'L60'), 2000, 'feedback')
 	})

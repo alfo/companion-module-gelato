@@ -62,7 +62,7 @@ While Gelato's show-mode lock is on, it accepts only **Lock off** and **Ping**. 
 
 ## What is in the module
 
-**Actions**: one for every `/gelato/...` command: add a colour (by code, or by brand and number), entry key, clear, enter, confirm, cancel, lock (on, off, toggle), apply a template, re-run the build, build new types, ping, and preview option, next, previous, choose and release. Two more change only what the module shows, and send nothing: _Entry: step the brand_ (L, R, SG, CG, G, A, from the code being typed) and _Edited palettes: scroll_ (next, previous, back to the first). They are made for knobs.
+**Actions**: one for every `/gelato/...` command: add a color (by code, or by brand and number), entry key, clear, enter, confirm, cancel, lock (on, off, toggle), apply a template, re-run the build, build new types, ping, and preview option, next, previous, choose and release. Two more change only what the module shows, and send nothing: _Entry: step the brand_ (L, R, SG, CG, G, A, from the code being typed) and _Edited palettes: scroll_ (next, previous, back to the first). They are made for knobs.
 
 **Feedbacks** (boolean): status is awaiting confirm, writing or error; lock on; console connected; readback waiting; preview state (previewing, refused, released or idle); edited palettes (any, or a slot); new types in the rig.
 
@@ -125,6 +125,6 @@ Tests never talk to Gelato or a console. `src/__tests__/fake-gelato.ts` is a fak
 
 The OSC and SLIP codec is in `src/osc.ts`, so the module has no dependency beyond Companion's own template.
 
-## Licence
+## License
 
 MIT
